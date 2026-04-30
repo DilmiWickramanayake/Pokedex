@@ -22,17 +22,23 @@ def get_evolution_chain(name):
             evolutions.append(evo_data["species"]["name"])
             evo_data = evo_data["evolves_to"][0] if evo_data["evolves_to"] else None
 
-        return " -> ".join(evolutions)
+        return evolutions
     except Exception as e:
-        return f"Error fetching evolution chain: {e}"
+        return []
 root = Tk() 
 root.geometry("800x600") 
 
 title = Label(root, text ='Pokedex', font = "50") 
-question = Label(root, text ='Enter the name of a Pokémon to get its information', font = "20")
+question = Label(root, text ='Enter the name of a Pokemon to get its information', font = "20")
 pokemon_name = Entry(root, width = 50)
 pokemon_info = Label(root, text = "", font = "20")
+evolution_frame = Frame(root)
 image_label = Label(root, text = "No image")
+
+def on_evolution_click(pokemon):
+    pokemon_name.delete(0, END)
+    pokemon_name.insert(0, pokemon)
+    get_pokemon_info()
 
 def get_pokemon_info():
     name = pokemon_name.get()
@@ -43,9 +49,24 @@ def get_pokemon_info():
         height = data['height']
         weight = data['weight']
         types = [t['type']['name'] for t in data['types']]
-        evolution = get_evolution_chain(name)
-        info_text = f"Name: {poke_name}\nHeight: {height}\nWeight: {weight}\nTypes: {', '.join(types)}\nEvolution: {evolution}"
+        evolutions = get_evolution_chain(name)
+        info_text = f"Name: {poke_name}\nHeight: {height}\nWeight: {weight}\nTypes: {', '.join(types)}"
         pokemon_info.config(text=info_text)
+        
+        for widget in evolution_frame.winfo_children():
+            widget.destroy()
+        
+        if evolutions:
+            evo_label = Label(evolution_frame, text="Evolution Chain: ", font="15")
+            evo_label.pack(side=LEFT)
+            for i, evo in enumerate(evolutions):
+                evo_btn = Button(evolution_frame, text=evo, fg="blue", bg="white", bd=0, 
+                                command=lambda p=evo: on_evolution_click(p))
+                evo_btn.pack(side=LEFT)
+                if i < len(evolutions) - 1:
+                    separator = Label(evolution_frame, text="-> ", font="15")
+                    separator.pack(side=LEFT)
+        
         img_url = data['sprites']['front_default']
 
         img_data = requests.get(img_url).content
@@ -57,7 +78,7 @@ def get_pokemon_info():
         image_label.config(image=photo)
         image_label.image = photo  
     else:
-        pokemon_info.config(text="Pokémon not found.")
+        pokemon_info.config(text="Pokemon not found.")
 
 getInfoButton = Button(root, text = "Get Info", command = get_pokemon_info)
 title.pack() 
@@ -65,6 +86,7 @@ question.pack()
 pokemon_name.pack()
 getInfoButton.pack()
 pokemon_info.pack()
+evolution_frame.pack()
 image_label.pack()
 
 if __name__ == "__main__":
