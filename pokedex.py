@@ -1,8 +1,8 @@
 import requests
 from tkinter import *
 from tkinter import messagebox 
-
-
+from PIL import Image, ImageTk
+from io import BytesIO
 
 api_url = "https://pokeapi.co/api/v2/pokemon/"
 
@@ -32,6 +32,7 @@ title = Label(root, text ='Pokedex', font = "50")
 question = Label(root, text ='Enter the name of a Pokémon to get its information', font = "20")
 pokemon_name = Entry(root, width = 50)
 pokemon_info = Label(root, text = "", font = "20")
+image_label = Label(root, text = "No image")
 
 def get_pokemon_info():
     name = pokemon_name.get()
@@ -45,6 +46,16 @@ def get_pokemon_info():
         evolution = get_evolution_chain(name)
         info_text = f"Name: {poke_name}\nHeight: {height}\nWeight: {weight}\nTypes: {', '.join(types)}\nEvolution: {evolution}"
         pokemon_info.config(text=info_text)
+        img_url = data['sprites']['front_default']
+
+        img_data = requests.get(img_url).content
+        img = Image.open(BytesIO(img_data))
+        img = img.resize((200, 200))
+
+        photo = ImageTk.PhotoImage(img)
+
+        image_label.config(image=photo)
+        image_label.image = photo  
     else:
         pokemon_info.config(text="Pokémon not found.")
 
@@ -54,6 +65,7 @@ question.pack()
 pokemon_name.pack()
 getInfoButton.pack()
 pokemon_info.pack()
+image_label.pack()
 
 if __name__ == "__main__":
     root.mainloop()
